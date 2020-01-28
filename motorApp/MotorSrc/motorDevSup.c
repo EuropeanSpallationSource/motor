@@ -119,7 +119,7 @@ RTN_STATUS devSupUpdateLimitFromDial(motorRecord *pmr, motor_cmnd command,
 void devSupMoveDialEgu(motorRecord *pmr, double vel, double accEGU, double pos, int relative)
 {
   struct motor_dset *pdset = (struct motor_dset *) (pmr->dset);
-  if (pdset->base.number > 8)
+  if ((pdset->base.number > 8) && (pdset->move_EGU))
   {
     motorExtMessage_type motorExtMessage;
     memset(&motorExtMessage, 0, sizeof(motorExtMessage));

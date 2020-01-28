@@ -238,6 +238,7 @@ struct motor_dset
     RTN_STATUS (*build_trans) (motor_cmnd, double *, struct motorRecord *);
     RTN_STATUS (*end_trans) (struct motorRecord *);
     RTN_STATUS (*move_EGU) (struct motorRecord *, motorExtMessage_type*);
+    int        (*devVprintSource) (struct motorRecord *pmr, const char *file, int line, const char *pformat, va_list pvar);
 };
 
 

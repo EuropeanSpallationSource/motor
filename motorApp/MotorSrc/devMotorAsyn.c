@@ -68,6 +68,9 @@
 #include "asynMotorController.h"
 #include "motor_interface.h"
 
+#ifndef ASYN_TRACE_INFO
+#define ASYN_TRACE_INFO      0x0040
+#endif
 /*Create the dset for devMotor */
 static long init( int after );
 static long init_record(struct motorRecord *);
@@ -76,6 +79,10 @@ static long start_trans(struct motorRecord *);
 static RTN_STATUS build_trans( motor_cmnd, double *, struct motorRecord *);
 static RTN_STATUS end_trans(struct motorRecord *);
 static RTN_STATUS move_EGU(struct motorRecord *, motorExtMessage_type *);
+static int devMotorAsynVprintSource(struct motorRecord *pmr,
+                                    const char *file,
+                                    int line,
+                                    const char *pFormat, va_list pVar) EPICS_PRINTF_STYLE(4,0);
 static void asynCallback(asynUser *);
 static void statusCallback(void *, asynUser *, void *);
 
@@ -83,7 +90,7 @@ typedef enum {int32Type, float64Type, float64ArrayType, genericPointerType} inte
 
 struct motor_dset devMotorAsyn={ 
     {
-         9,
+         10,
          NULL,
          (DEVSUPFUN) init,
          (DEVSUPFUN) init_record,
@@ -93,7 +100,8 @@ struct motor_dset devMotorAsyn={
     start_trans,
     build_trans,
     end_trans,
-    move_EGU
+    move_EGU,
+    devMotorAsynVprintSource
 };
 
 epicsExportAddress(dset,devMotorAsyn);
@@ -352,6 +360,10 @@ static long init_record(struct motorRecord * pmr )
                   pmr->name, port);
         goto bad;
     }
+    /* We want the ASYN_TRACE_INFO enabled */
+    pasynTrace->setTraceMask(pasynUser, ASYN_TRACE_ERROR | ASYN_TRACE_INFO);
+    /* Print time and file/line */
+    pasynTrace->setTraceInfoMask(pasynUser, ASYN_TRACEINFO_TIME | ASYN_TRACEINFO_SOURCE);
 
     /* Get the asynInt32 interface */
     pasynInterface = pasynManager->findInterface(pasynUser, asynInt32Type, 1);
@@ -816,6 +828,21 @@ static RTN_STATUS move_EGU(struct motorRecord *pmr,
     }
     return(rtnind);
 }
+
+static int devMotorAsynVprintSource(struct motorRecord *pmr,
+                                    const char *file, int line,
+                                    const char *pFormat, va_list pVar)
+{
+    motorAsynPvt *pPvt = (motorAsynPvt *)pmr->dpvt;
+    asynUser *pasynUser = pPvt->pasynUser;
+    int trMask = ASYN_TRACE_INFO;
+    if (!pasynUser) {
+        vfprintf(stdout, pFormat, pVar);
+        return -1;
+    }
+    return pasynTrace->vprintSource(pasynUser, trMask, file, line, pFormat, pVar);
+}
+
 
 
 /**
