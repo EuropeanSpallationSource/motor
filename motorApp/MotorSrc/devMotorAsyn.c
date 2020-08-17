@@ -222,7 +222,12 @@ static void init_controller_load_pos_if_needed(struct motorRecord *pmr, asynUser
     /* the encoder ratio has been set in config_controller() */
     if (load_pos_needed(pmr, pasynUser))
     {
-        double setPos = pmr->dval / pmr->mres;
+        double setPos;
+        if (pmr->mflg & MF_DRIVER_USES_EGU)
+            setPos = pmr->dval;
+        else
+            setPos = pmr->dval / pmr->mres;
+
         epicsEventId initEvent = epicsEventCreate( epicsEventEmpty );
         RTN_STATUS rtnval;
 
