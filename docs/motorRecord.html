@@ -793,7 +793,7 @@ below.
     <td>R/W*</td>
     <td>New Target Monitor</td>
     <td>RECCHOICE</td>
-    <td>(0:"NO", 1:"YES")</td>
+    <td>(0:"NO", 1:"YES", 2:"UPDATE")</td>
   </tr>
   <tr>
     <td><a href="#Fields_misc">NTMF</a></td>
@@ -3152,8 +3152,11 @@ below.
     <td>R/W</td>
     <td>New Target Monitor</td>
     <td>RECCHOICE</td>
-    <td>The requirements on how the motor record processes a new target position 
-    while the motor is in motion are as follows;<BR>
+    <td>The requirements on how the motor record processes a new target position.
+      When NTM is "UPDATE" while moving, a new move() command with the new position
+      will be send to the controller immediately. The record does not wait for the previous move to be completed.
+      Note that driver/conroller must handle this situation well.<BR>  
+    Otherwise, while the motor is in motion, the options are as follows;<BR>
       Case #1: The motor record is given a new position, which is in the opposite 
       direction from the current motor motion.  If NTM is "YES", the motor is 
       immediately stopped and given a motion command to the new position.  If NTM is "NO 

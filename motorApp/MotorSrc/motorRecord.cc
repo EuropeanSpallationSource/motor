@@ -2271,8 +2271,21 @@ static RTN_STATUS doDVALchangedOrNOTdoneMoving(motorRecord *pmr)
     }
 
     if (pmr->mip == MIP_DONE || pmr->mip == MIP_RETRY)
+    {
         doRetryOrDone(pmr, preferred_dir, relpos, relbpos);
-
+    }
+    else if (pmr->mip & MIP_MOVE && pmr->ntm == motorNTM_UPDATE)
+    {
+        doRetryOrDone(pmr, preferred_dir, relpos, relbpos);
+        /*
+         * Once the motor has stopped, it should start a new motion,
+         * and not go through retry
+         * Therefore we set the MIP to STOP | MOVE (which feels a little
+         * bit strange)
+         */
+        if (pmr->mip == MIP_MOVE)
+            MIP_SET_BIT(MIP_STOP);
+    }
     return(OK);
 }
 
