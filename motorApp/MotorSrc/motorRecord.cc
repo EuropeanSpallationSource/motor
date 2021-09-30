@@ -384,6 +384,18 @@ enum moveMode{
   moveModeBacklash
 };
 
+/*************************************************************************/
+static const char *spmgToAscii(int spmg)
+{
+    switch (spmg)
+    {
+        case motorSPMG_Stop:  return "STOP";
+        case motorSPMG_Pause: return "PAUSE";
+        case motorSPMG_Move:  return "MOVE";
+        case motorSPMG_Go:    return "GO";
+        default:              return "SPMG??";
+    }
+}
 
 /******************************************************************************
  * Debug MIP and MIP changes
@@ -1670,9 +1682,9 @@ static long process(dbCommon *arg)
                     char dbuf[MBLE];
                     dbgMipToString(pmr->mip, dbuf, sizeof(dbuf));
                     Debug(pmr,1,
-                          "motor is stopped dval=%f drbv=%f pp=%d udf=%d stat=%d stop=%d mip=0x%0x(%s) msta=0x%x\n",
+                          "motor is stopped dval=%f drbv=%f pp=%d udf=%d stat=%d stop=%d pmr->spmg=%s mip=0x%0x(%s) msta=0x%x\n",
                           pmr->dval, pmr->drbv, pmr->pp, pmr->udf, pmr->stat,
-                          pmr->stop, pmr->mip, dbuf, pmr->msta);
+                          pmr->stop, spmgToAscii(pmr->spmg), pmr->mip, dbuf, pmr->msta);
                 }
 #endif
                 pmr->dmov = TRUE;
@@ -2574,8 +2586,9 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
     {
         char dbuf[MBLE];
         dbgMipToString(pmr->mip, dbuf, sizeof(dbuf));
-        Debug(pmr,6, "do_work: begin udf=%d stat=%d nsta=%d commandedDval=%f dval=%f last.dval=%f drbv=%f mip=0x%0x(%s)\n",
+        Debug(pmr,6, "do_work: begin udf=%d stat=%d nsta=%d spmg=%s commandedDval=%f dval=%f last.dval=%f drbv=%f mip=0x%0x(%s)\n",
               pmr->udf, pmr->stat, pmr->nsta,
+              spmgToAscii(pmr->spmg),
               pmr->priv->last.commandedDval, pmr->dval, pmr->priv->last.dval,
               pmr->drbv, pmr->mip, dbuf);
     }
@@ -2647,6 +2660,8 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                         MARK(M_DMOV);
                     }
                     /* Send message (just in case), but don't put MIP in STOP state. */
+                    Debug(pmr,1, "STOP spmg=%s stop=%d\n",
+                          spmgToAscii(pmr->spmg), pmr->stop);
                     devSupStop(pmr);
                     return(OK);
                 }
@@ -2668,6 +2683,8 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                 MIP_SET_VAL(MIP_STOP);
                 MARK(M_MIP);
             }
+            Debug(pmr,1, "STOP spmg=%s stop=%d\n",
+                  spmgToAscii(pmr->spmg), pmr->stop);
             devSupStop(pmr);
             return(OK);
         }
@@ -2737,6 +2754,8 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
             {
                 MIP_SET_BIT(MIP_STOP);
                 MARK(M_MIP);
+                Debug(pmr,1, "STOP homf=%d homr=%d\n",
+                      pmr->homf, pmr->homr);
                 devSupStop(pmr);
             }
             else
@@ -2790,6 +2809,8 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                 pmr->pp = TRUE;
                 MIP_SET_BIT(MIP_STOP);
                 MARK(M_MIP);
+                Debug(pmr,1, "STOP jogf=%d jogr=%d\n",
+                      pmr->jogf, pmr->jogr);
                 devSupStop(pmr);
             }
             else
@@ -3017,6 +3038,12 @@ static long special(DBADDR *paddr, int after)
         case DBF_STRING:
             pString = (const char*)paddr->pfield;
             break;
+        }
+        switch (fieldIndex)
+        {
+            case motorRecordSPMG:
+                pString = spmgToAscii((int)value);
+                break;
         }
         if (pString)
         {
