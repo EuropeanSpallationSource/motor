@@ -531,6 +531,16 @@ static void dbgMipToString(unsigned v, char *buf, size_t buflen)
 #endif
 
 
+#define SET_DMOV(value)                              \
+  do {                                               \
+        Debug(pmr,2, "setDmov old=%d new=%d\n",      \
+              pmr->dmov, value);                     \
+        if (pmr->dmov != value) {                    \
+            pmr->dmov = value;                       \
+        }                                            \
+  }                                                  \
+  while(0)
+
 #define SET_LVIO(value)                              \
   do {                                               \
     if (value || (pmr->lvio != value)) {             \
@@ -811,7 +821,7 @@ static long init_re_init(motorRecord *pmr)
     set_dial_lowlimit(pmr);
 
     /* Initialize miscellaneous control fields. */
-    pmr->dmov = TRUE;
+    SET_DMOV(TRUE);
     MARK(M_DMOV);
     pmr->movn = FALSE;
     MARK(M_MOVN);
@@ -1071,7 +1081,7 @@ static bool doMoveDialPosition(motorRecord *pmr, enum moveMode moveMode,
 static void doBackLash(motorRecord *pmr)
 {
     /* Restore DMOV to false and UNMARK it so it is not posted. */
-    pmr->dmov = FALSE;
+    SET_DMOV(FALSE);
     UNMARK(M_DMOV);
 
 #ifdef DEBUG
@@ -1171,7 +1181,7 @@ static long postProcess(motorRecord * pmr)
         {
             /* Stopped and Hom* button still down.  Now do Hom*. */
             MIP_CLR_BIT(MIP_STOP);
-            pmr->dmov = FALSE;
+            SET_DMOV(FALSE);
             MARK(M_DMOV);
             pmr->rcnt = 0;
             MARK(M_RCNT);
@@ -1279,7 +1289,7 @@ static void maybeRetry(motorRecord * pmr)
             }
             else
             {
-                pmr->dmov = FALSE;
+                SET_DMOV(FALSE);
                 UNMARK(M_DMOV);
                 MIP_SET_VAL(MIP_RETRY);
             }
@@ -1622,7 +1632,7 @@ static long process(dbCommon *arg)
              * of movn (inverted).
              */
             if (pmr->dmov) {
-                pmr->dmov = FALSE;
+                SET_DMOV(FALSE);
                 MARK(M_DMOV);
                 MIP_SET_BIT(MIP_EXTERNAL);
                 MARK(M_MIP);
@@ -1666,9 +1676,18 @@ static long process(dbCommon *arg)
             /* Assume we're done moving until we find out otherwise. */
             if (pmr->dmov == FALSE)
             {
-                if (process_reason == CALLBACK_DATA &&
-                    pmr->spmg == motorSPMG_Pause &&
-                    pmr->mip == MIP_STOP)
+                bool spmg_stopped_or_paused = FALSE;
+                if (process_reason == CALLBACK_DATA)
+                {
+                    if (pmr->spmg == motorSPMG_Pause && pmr->mip == MIP_DONE)
+                        spmg_stopped_or_paused = TRUE;
+                    else if (pmr->spmg == motorSPMG_Pause && pmr->mip == MIP_STOP)
+                        spmg_stopped_or_paused = TRUE;
+                    else if (pmr->spmg == motorSPMG_Stop && pmr->mip == MIP_DONE)
+                        spmg_stopped_or_paused = TRUE;
+                }
+
+                if (spmg_stopped_or_paused)
                 {
                     /*
                      * update because of a flickering encoder ?
@@ -1696,7 +1715,7 @@ static long process(dbCommon *arg)
                           pmr->stop, spmgToAscii(pmr->spmg), pmr->mip, dbuf, pmr->msta);
                 }
 #endif
-                pmr->dmov = TRUE;
+                SET_DMOV(TRUE);
                 MARK(M_DMOV);
                 if (pmr->mip & (MIP_HOMF | MIP_HOMR))
                 {
@@ -1771,7 +1790,7 @@ static long process(dbCommon *arg)
                     clear_buttons(pmr);
 
                     /* Restore DMOV to false and UNMARK it so it is not posted. */
-                    pmr->dmov = FALSE;
+                    SET_DMOV(FALSE);
                     UNMARK(M_DMOV);
                     Debug(pmr, 11, "devSupGetInfo%s\n", "");
                     devSupGetInfo(pmr);
@@ -1843,7 +1862,7 @@ static long process(dbCommon *arg)
                         Debug(pmr, 11, "devSupGetInfo%s\n", "");
                         devSupGetInfo(pmr);
                         /* Restore DMOV to false and UNMARK it so it is not posted. */
-                        pmr->dmov = FALSE;
+                        SET_DMOV(FALSE);
                         UNMARK(M_DMOV);
                         goto process_exit;
                     }
@@ -1883,7 +1902,7 @@ static long process(dbCommon *arg)
                     }
 
                     /* Restore DMOV to false and UNMARK it so it is not posted. */
-                    pmr->dmov = FALSE;
+                    SET_DMOV(FALSE);
                     UNMARK(M_DMOV);
                     goto process_exit;
                 }
@@ -1944,7 +1963,7 @@ process_exit:
         recGblFwdLink(pmr);                 /* Process the forward-scan-link record. */
 
     pmr->pact = 0;
-    Debug(pmr,8, "process:---------------------- %s\n", "end");
+    Debug(pmr,8, "process:---------------------- end, drbv=%f\n", pmr->drbv);
     if (pmr->spam) fflush(stdout);                                  \
     return (status);
 }
@@ -2032,7 +2051,7 @@ static void doRetryOrDone(motorRecord *pmr, bool preferred_dir,
     /* v1.96 Don't post dmov if special already did. */
     if (pmr->dmov)
     {
-        pmr->dmov = FALSE;
+        SET_DMOV(FALSE);
         MARK(M_DMOV);
     }
     SET_LAST_VAL_FROM_VAL;
@@ -2201,7 +2220,7 @@ static RTN_STATUS doDVALchangedOrNOTdoneMoving(motorRecord *pmr)
               pmr->dval, pmr->spdb, pmr->mres, pmr->drbv);
         if (pmr->dmov == FALSE && (pmr->mip == MIP_DONE || pmr->mip == MIP_RETRY))
         {
-            pmr->dmov = TRUE;
+            SET_DMOV(TRUE);
             MARK(M_DMOV);
             if (pmr->mip != MIP_DONE)
             {
@@ -2295,7 +2314,7 @@ static RTN_STATUS doDVALchangedOrNOTdoneMoving(motorRecord *pmr)
         }
         if (pmr->mip == MIP_DONE && pmr->dmov == FALSE)
         {
-            pmr->dmov = TRUE;
+            SET_DMOV(TRUE);
             MARK(M_DMOV);
         }
         return(OK);
@@ -2695,7 +2714,7 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                     {
                         MIP_SET_VAL(MIP_DONE);
                         MARK(M_MIP);
-                        pmr->dmov = TRUE;
+                        SET_DMOV(TRUE);
                         MARK(M_DMOV);
                     }
                     /* Send message (just in case), but don't put MIP in STOP state. */
@@ -2711,6 +2730,11 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                 }
                 else
                     syncTargetPosition(pmr);   /* Synchronize target positions with readbacks. */
+            }
+            /* No operation going on */
+            if (pmr->mip == MIP_DONE)
+            {
+                return(OK);
             }
             /* Cancel any operations. */
             if (pmr->mip & MIP_HOME)
@@ -2781,7 +2805,7 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
         {
             if (stop_or_pause == true)
             {
-                pmr->dmov = FALSE;
+                SET_DMOV(FALSE);
                 MARK(M_DMOV);
                 return(OK);
             }
@@ -2806,7 +2830,7 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                     //MARK(M_ERES);
                 }
                 doHomeSetcdir(pmr);
-                pmr->dmov = FALSE;
+                SET_DMOV(FALSE);
                 MARK(M_DMOV);
                 pmr->rcnt = 0;
                 MARK(M_RCNT);
@@ -2855,7 +2879,7 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
             else
             {
                 double jogv = pmr->jvel * dir;
-                pmr->dmov = FALSE;
+                SET_DMOV(FALSE);
                 MARK(M_DMOV);
                 pmr->pp = TRUE;
                 if (pmr->jogr)
@@ -2968,7 +2992,7 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
             SET_LAST_VAL_FROM_VAL;
             MIP_SET_VAL(MIP_DONE);
             MARK(M_MIP);
-            pmr->dmov = TRUE;
+            SET_DMOV(TRUE);
             MARK(M_DMOV);
             return(OK);
         }
@@ -3115,7 +3139,7 @@ static long special(DBADDR *paddr, int after)
                     return(OK);
                 if (pmr->dmov == TRUE)
                 {
-                    pmr->dmov = FALSE;
+                    SET_DMOV(FALSE);
                     db_post_events(pmr, &pmr->dmov, DBE_VAL_LOG);
                 }
                 else
@@ -4297,7 +4321,7 @@ static void load_pos_load_pos(motorRecord * pmr)
     MARK(M_MIP);
     if (pmr->dmov == TRUE)
     {
-        pmr->dmov = FALSE;
+        SET_DMOV(FALSE);
         MARK(M_DMOV);
     }
 
