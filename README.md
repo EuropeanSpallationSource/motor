@@ -8,6 +8,14 @@ https://github.com/epics-modules/motor/
 
 # Changes to upstream motor, the most important ones
 
+## v7.3.2-ESS, based on R7-4
+###  Bug fixes
+#### 4ebe748c68: Fix for infinite loop in motor_task preventing graceful shutdown of the IOC
+#### various to fix ci pipelines
+#### Update driver submodules
+###  Improvements
+#### 841fd2b7cf: Remove uses of the deprecated register keyword
+#### 314ef89ac2: asynMotor: Introduce motorActVelocity
 ## v7.2.81-ESS, based on R7-3-1, and latest master.
 ###  Bug fix
 #### 99d16dcdbb: asynMotorController: Fix for wrong timeout in pollAll()
