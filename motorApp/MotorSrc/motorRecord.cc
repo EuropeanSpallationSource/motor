@@ -1181,7 +1181,7 @@ static void doBackLash(motorRecord *pmr)
     else if(pmr->mip & MIP_MOVE)
     {
         /* First part of move done. Do backlash correction. */
-        pmr->rval = NINT(pmr->dval);
+        pmr->rval = NINT(pmr->dval / pmr->mres);
         moving_started = doMoveDialPosition(pmr, moveModeBacklash, pmr->dval, pmr->frac);
         if (moving_started)
             MIP_SET_VAL(MIP_MOVE_BL);
@@ -1189,7 +1189,7 @@ static void doBackLash(motorRecord *pmr)
     else if (pmr->mip & MIP_JOG_BL1)
     {
         /* First part of jog done. Do backlash correction. */
-        pmr->rval = NINT(pmr->dval);
+        pmr->rval = NINT(pmr->dval / pmr->mres);
         moving_started = doMoveDialPosition(pmr, moveModeBacklash, pmr->dval, pmr->frac);
         if (moving_started)
             MIP_SET_VAL(MIP_JOG_BL2);
