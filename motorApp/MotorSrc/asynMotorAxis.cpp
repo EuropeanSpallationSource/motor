@@ -331,6 +331,16 @@ asynStatus asynMotorAxis::setIntegerParam(int function, int value)
     if (status != status_.status) {
       status_.status = status;
       statusChanged_ = 1;
+      if (value && (function == pC_->motorStatusDone_)) {
+        /*
+          Note1: When we are done, undefine the latest command.
+          E.g. avoid "Homing" when the homing had been done before
+          and now the motor is moved "externaly".
+          Note2: This may frequently happens to the blades in a slit system,
+          where blades are homed and then gap and center are moved
+        */
+        (void)asynMotorAxis::setIntegerParam(pC_->motorLatestCommand_, LATEST_COMMAND_UNDEFINED);
+      }
     }
     pC_->setIntegerParam(axisNo_, pC_->motorStatus_, status);
   } else  if (function >= pC_->motorFlagsHomeOnLs_ &&
