@@ -8,6 +8,12 @@ https://github.com/epics-modules/motor/
 
 # Changes to upstream motor, the most important ones
 
+## v7.3.3-ESS, based on R7-4
+###  Bug fixes
+#### 8be19db84: motorRecord.cc: Correct calculation of RVAL
+#### fb8162630: asynMotorAxis: Reset motorLatestCommand when done
+### Improvement
+#### 5cf152f20: motorRecord: ...possible...not-homed-motor...ALARM_MINOR
 ## v7.3.2-ESS, based on R7-4
 ###  Bug fixes
 #### 4ebe748c68: Fix for infinite loop in motor_task preventing graceful shutdown of the IOC
