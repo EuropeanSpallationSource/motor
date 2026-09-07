@@ -4112,6 +4112,11 @@ static void alarm_sub(motorRecord * pmr)
         recGblSetSevr((dbCommon *) pmr, STATE_ALARM, MAJOR_ALARM);
         return;
     }
+    else if (!(msta.Bits.RA_HOMED) && pmr->mflg & MF_NOT_HOMED_WARNING)
+    {
+        recGblSetSevr((dbCommon *) pmr, STATE_ALARM, MINOR_ALARM);
+        return;
+    }
     if (pmr->misv && pmr->miss)
     {
         recGblSetSevr((dbCommon *) pmr, STATE_ALARM, pmr->misv);

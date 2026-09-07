@@ -124,6 +124,7 @@ asynMotorController::asynMotorController(const char *portName, int numAxes, int 
   createParam(motorFlagsNotHomedProblemString,   asynParamInt32,      &motorFlagsNotHomedProblem_);
   createParam(motorFlagsNoTweakOnLsString,       asynParamInt32,      &motorFlagsNoTweakOnLs_);
   createParam(motorFlagsRwSoftLimitsString,      asynParamInt32,      &motorFlagsRwSoftLimits_);
+  createParam(motorFlagsNotHomedWarningString,   asynParamInt32,      &motorFlagsNotHomedWarning_);
 
   createParam(motorWaitPollsBeforeReadyString,   asynParamInt32,      &motorWaitPollsBeforeReady_);
 

@@ -344,7 +344,7 @@ asynStatus asynMotorAxis::setIntegerParam(int function, int value)
     }
     pC_->setIntegerParam(axisNo_, pC_->motorStatus_, status);
   } else  if (function >= pC_->motorFlagsHomeOnLs_ &&
-              function <= pC_->motorFlagsRwSoftLimits_) {
+              function <= pC_->motorFlagsNotHomedWarning_) {
     epicsUInt32 flagsValue = status_.flagsValue;
     epicsUInt32 mask = 1 << (function - pC_->motorFlagsHomeOnLs_);
 
