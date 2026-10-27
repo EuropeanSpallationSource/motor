@@ -357,6 +357,7 @@ typedef union
         unsigned int M_MIP      :1;
         unsigned int M_DIFF     :1;
         unsigned int M_RDIF     :1;
+        unsigned int M_DMOV_BLINK :1;
     } Bits;
 } mmap_field;
 
@@ -3008,7 +3009,7 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
                 MIP_CLR_BIT(MIP_JOG_REQ);
                 /* blink DMOV and post a monitor */
                 pmr->dmov = FALSE;
-                db_post_events(pmr, &pmr->dmov, DBE_VAL_LOG);
+                MARK(M_DMOV_BLINK);
                 SET_DMOV_MARK(TRUE);
                 if (pmr->jogf)
                 {
@@ -3297,7 +3298,7 @@ static long special(DBADDR *paddr, int after)
                     bool value = FALSE;
                     Debug(pmr,2, "setDmov old=%d new=%d\n", pmr->dmov, value);
                     pmr->dmov = value;
-                    db_post_events(pmr, &pmr->dmov, DBE_VAL_LOG);
+                    MARK(M_DMOV_BLINK);
                 }
                 else
                 {
@@ -4185,6 +4186,16 @@ static void monitor(motorRecord * pmr)
     nmap_bits.All = pmr->nmap; /* Initialize for MARKED_AUX. */
 
     monitor_mask = recGblResetAlarms(pmr);
+
+    if (MARKED(M_DMOV_BLINK))
+    {
+        /* Post DMOV=0 first, DMOV may already be 1 again */
+        short old_dmov = pmr->dmov;
+        pmr->dmov = FALSE;
+        db_post_events(pmr, &pmr->dmov, DBE_VAL_LOG);
+        pmr->dmov = old_dmov;
+        UNMARK(M_DMOV_BLINK);
+    }
 
     if (pmr->mdel == 0.0 && pmr->adel == 0.0)
     {
