@@ -4103,7 +4103,12 @@ static void alarm_sub(motorRecord * pmr)
         return;
     }
 
-    if ((msta.Bits.EA_SLIP_STALL != 0) || (msta.Bits.RA_PROBLEM != 0))
+    if (msta.Bits.RA_PROBLEM != 0)
+    {
+      recGblSetSevr((dbCommon *) pmr, STATE_ALARM, MAJOR_ALARM);
+      return;
+    }
+    if ((msta.Bits.EA_SLIP_STALL != 0) && !(pmr->mflg & MF_SLIP_STALL_WARNING))
     {
       recGblSetSevr((dbCommon *) pmr, STATE_ALARM, MAJOR_ALARM);
       return;
@@ -4118,6 +4123,12 @@ static void alarm_sub(motorRecord * pmr)
         recGblSetSevr((dbCommon *) pmr, STATE_ALARM, MINOR_ALARM);
         return;
     }
+    else if (msta.Bits.EA_SLIP_STALL != 0)
+    {
+      recGblSetSevr((dbCommon *) pmr, STATE_ALARM, MINOR_ALARM);
+      return;
+    }
+
     if (pmr->misv && pmr->miss)
     {
         recGblSetSevr((dbCommon *) pmr, STATE_ALARM, pmr->misv);

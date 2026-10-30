@@ -218,6 +218,7 @@ typedef union
 #define MF_NO_TWEAK_ONLS   (1<<7)
 #define MF_RW_SOFT_LIMITS (1<<8)
 #define MF_NOT_HOMED_WARNING (1<<9)
+#define MF_SLIP_STALL_WARNING (1<<10)
 
 
 
