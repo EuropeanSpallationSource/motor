@@ -2081,7 +2081,7 @@ process_exit:
 
     pmr->pact = 0;
     Debug(pmr,8, "process:---------------------- %s\n", "end");
-    if (pmr->spam) fflush(stdout);                                  \
+    if (pmr->spam) fflush(stdout);
     return (status);
 }
 /*************************************************************************/
