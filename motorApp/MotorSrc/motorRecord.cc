@@ -4767,7 +4767,7 @@ static void check_speed_and_resolution(motorRecord * pmr)
 
     /* Sanity check on home velocity. */
     if (pmr->hvel == 0.0)
-        pmr->hvel = pmr->vbas;
+        pmr->hvel = pmr->velo;
     else
         range_check(pmr, &pmr->hvel, pmr->vbas, pmr->vmax);
 }
