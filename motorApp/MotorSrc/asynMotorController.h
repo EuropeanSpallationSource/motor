@@ -82,6 +82,7 @@
 #define motorFlagsRwSoftLimitsString    "MOTOR_FLAGS_RW_SOFT_LIMITS"
 #define motorFlagsNotHomedWarningString "MOTOR_FLAGS_NOT_HOMED_WARNING"
 #define motorFlagsSlipStallWarningString "MOTOR_FLAGS_SLIP_STALL_WARNING"
+#define motorFlagsJogToTheEndString     "MOTOR_FLAGS_JOG_TO_THE_END"
 
 #define motorWaitPollsBeforeReadyString "MOTOR_WAIT_POLLS_BEFORE_READY"
 
@@ -363,6 +364,7 @@ class epicsShareClass asynMotorController : public asynPortDriver {
   int motorFlagsRwSoftLimits_;
   int motorFlagsNotHomedWarning_;
   int motorFlagsSlipStallWarning_;
+  int motorFlagsJogToTheEnd_;
   // These are per-motor parameters for passing additional motor record information to the driver
   int motorRecResolution_;
   int motorRecDirection_;

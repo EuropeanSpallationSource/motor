@@ -219,6 +219,7 @@ typedef union
 #define MF_RW_SOFT_LIMITS (1<<8)
 #define MF_NOT_HOMED_WARNING (1<<9)
 #define MF_SLIP_STALL_WARNING (1<<10)
+#define MF_JOG_TO_THE_END (1<<11)
 
 
 

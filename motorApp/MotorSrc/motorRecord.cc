@@ -728,6 +728,21 @@ static void updateACCL_ACCSfromVELO(motorRecord *pmr)
     }
 }
 
+static double calc_jog_softlimit_margin(motorRecord *pmr)
+{
+    /* If we use the softlimits in the motion controller,
+       it will stop before reaching the soft limit,
+       or at the softlimit.
+    */
+    if ((pmr->mflg & MF_JOG_TO_THE_END) &&
+        (pmr->priv->motorSoftLimits.motorROdialLimitsValid ||
+         pmr->priv->motorSoftLimits.motorRWdialLimitsValid))
+    {
+        return 0.0 - pmr->rdbd;
+    }
+    /* else use the 1 second safety margin (as before) */
+    return pmr->jvel;
+}
 
 
 /******************************************************************************
@@ -2034,9 +2049,15 @@ enter_do_work:
         SET_LVIO(0);
     else
     {
+      /* The motorRecord (this code) stops a jogging motor 1 second
+         before reaching the soft limit. The good thing: we have a safety margin
+         The disadvantage: motion controllers doing their own softlimit handling
+         can not jog to the end. Solution: make it configurable, add a litte margin.
+      */
+        double effective_jvel = calc_jog_softlimit_margin(pmr);
         if (pmr->mip & MIP_JOG)
-            SET_LVIO((pmr->jogf && (pmr->rbv > pmr->hlm - pmr->jvel)) ||
-                     (pmr->jogr && (pmr->rbv < pmr->llm + pmr->jvel)) ||
+            SET_LVIO((pmr->jogf && (pmr->rbv > pmr->hlm - effective_jvel)) ||
+                     (pmr->jogr && (pmr->rbv < pmr->llm + effective_jvel)) ||
                      (pmr->dllm > pmr->dhlm));
         else if (pmr->mip & MIP_HOME)
             SET_LVIO(0);  /* Disable soft-limit error check during home search. */
@@ -2993,13 +3014,24 @@ static RTN_STATUS do_work(motorRecord * pmr, CALLBACK_VALUE proc_ind)
             /* check for limit violation */
             else if (!softLimitsDefined(pmr))
                 ;
-            else if ((pmr->jogf && (pmr->val > pmr->hlm - pmr->jvel)) ||
-                     (pmr->jogr && (pmr->val < pmr->llm + pmr->jvel)) ||
-                     (pmr->dllm > pmr->dhlm))
+            else
             {
-                SET_LVIO(1);
-                start_jog = 0;
+                double effective_jvel = calc_jog_softlimit_margin(pmr);
+                if ((pmr->jogf && (pmr->rbv > pmr->hlm - effective_jvel)) ||
+                    (pmr->jogr && (pmr->rbv < pmr->llm + effective_jvel)) ||
+                    (pmr->dllm > pmr->dhlm))
+                {
+                    SET_LVIO(1);
+                    start_jog = 0;
+                }
+                Debug(pmr,6, "do_work: start-jogging jogToTheEnd=%d ROLimitsValid=%d RWLimitsValid=%d rbv=%f effective_jvel=%f\n",
+                      pmr->mflg & MF_JOG_TO_THE_END ? 1 :0,
+                      pmr->priv->motorSoftLimits.motorROdialLimitsValid,
+                      pmr->priv->motorSoftLimits.motorRWdialLimitsValid,
+                      pmr->rbv, effective_jvel);
+
             }
+
             if (!start_jog)
             {
 #ifdef DEBUG
