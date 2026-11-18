@@ -8,6 +8,13 @@ https://github.com/epics-modules/motor/
 
 # Changes to upstream motor, the most important ones
 
+## v7.3.4-ESS, based on R7-4 +HEAD from  2026-11-18
+### Improvements
+#### 333decdf6: motorRecord: Make it possible to jog to the end
+#### 999721a1e: motorRecord: Make it possible to have minor alarm for SLIP_STALL
+#### 964834e4a :motorUtil, motorUtilAux: No more sprintf()
+###  Bug fix
+#### 5c78e66a9: motorRecord.cc: Update the timestamp when DMOV goes to 0
 ## v7.3.3-ESS, based on R7-4
 ###  Bug fixes
 #### 8be19db84: motorRecord.cc: Correct calculation of RVAL
